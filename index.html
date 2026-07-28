@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>OljaraVoz — Transcriptor de Reuniones con IA</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%231A56DB'/%3E%3Ctext x='16' y='24' text-anchor='middle' font-family='Georgia%2C serif' font-size='18' font-weight='bold' fill='white'%3EOV%3C/text%3E%3C/svg%3E" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #F7F6F2; --ink: #111110; --muted: #6B6B65;
+      --accent: #1A56DB; --line: #E2E1DC; --white: #FFFFFF;
+      --success: #16a34a; --error: #dc2626;
+    }
+    html { scroll-behavior: smooth; }
+    body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--ink); -webkit-font-smoothing: antialiased; min-height: 100vh; }
+
+    /* NAV */
+    nav { display: flex; justify-content: space-between; align-items: center; padding: 1.25rem 2.5rem; border-bottom: 1px solid var(--line); background: rgba(247,246,242,0.95); backdrop-filter: blur(12px); position: sticky; top: 0; z-index: 100; }
+    .logo { font-family: 'DM Serif Display', serif; font-size: 1.3rem; color: var(--ink); text-decoration: none; }
+    .logo span { color: var(--accent); }
+    .nav-tag { font-size: 0.75rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); background: var(--line); padding: 0.3rem 0.75rem; border-radius: 20px; }
+
+    /* HERO */
+    .hero { text-align: center; padding: 5rem 2rem 3rem; max-width: 700px; margin: 0 auto; }
+    .hero-tag { display: inline-block; font-size: 0.72rem; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent); margin-bottom: 1.25rem; }
+    .hero h1 { font-family: 'DM Serif Display', serif; font-size: clamp(2.2rem, 5vw, 3.5rem); line-height: 1.1; letter-spacing: -0.03em; margin-bottom: 1.25rem; }
+    .hero h1 em { font-style: italic; color: var(--accent); }
+    .hero p { font-size: 1.05rem; color: var(--muted); line-height: 1.75; max-width: 520px; margin: 0 auto 2.5rem; }
+
+    /* UPLOAD */
+    .upload-section { max-width: 680px; margin: 0 auto; padding: 0 2rem 4rem; }
+    .drop-zone { border: 2px dashed var(--line); border-radius: 16px; padding: 3.5rem 2rem; text-align: center; cursor: pointer; transition: border-color 0.2s, background 0.2s; background: var(--white); position: relative; }
+    .drop-zone:hover, .drop-zone.drag-over { border-color: var(--accent); background: rgba(26,86,219,0.03); }
+    .drop-zone.drag-over { transform: scale(1.01); }
+    .drop-icon { width: 48px; height: 48px; margin: 0 auto 1rem; color: var(--accent); opacity: 0.7; }
+    .drop-title { font-size: 1rem; font-weight: 600; margin-bottom: 0.4rem; }
+    .drop-sub { font-size: 0.85rem; color: var(--muted); }
+    .drop-sub strong { color: var(--accent); cursor: pointer; }
+    .drop-formats { margin-top: 1rem; font-size: 0.75rem; color: var(--muted); }
+    #file-input { display: none; }
+
+    /* PROGRESS */
+    .progress-box { background: var(--white); border: 1px solid var(--line); border-radius: 16px; padding: 2rem; display: none; }
+    .progress-box.visible { display: block; }
+    .progress-header { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1.25rem; }
+    .spinner { width: 20px; height: 20px; border: 2px solid var(--line); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; flex-shrink: 0; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .progress-step { font-size: 0.9rem; font-weight: 500; }
+    .progress-bar-wrap { background: var(--line); border-radius: 99px; height: 6px; overflow: hidden; }
+    .progress-bar { height: 100%; background: var(--accent); border-radius: 99px; transition: width 0.4s ease; width: 0%; }
+    .progress-pct { font-size: 0.8rem; color: var(--muted); margin-top: 0.5rem; text-align: right; }
+
+    /* ERROR */
+    .error-box { background: #fef2f2; border: 1px solid #fecaca; border-radius: 12px; padding: 1.25rem 1.5rem; color: var(--error); font-size: 0.9rem; display: none; margin-top: 1rem; }
+    .error-box.visible { display: block; }
+
+    /* RESULTADOS */
+    .results-section { max-width: 900px; margin: 0 auto; padding: 0 2rem 6rem; display: none; }
+    .results-section.visible { display: block; }
+
+    .results-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem; }
+    .results-title { font-family: 'DM Serif Display', serif; font-size: 1.8rem; letter-spacing: -0.02em; }
+    .results-meta { font-size: 0.82rem; color: var(--muted); }
+
+    .btn-download { display: inline-flex; align-items: center; gap: 0.5rem; background: var(--ink); color: var(--white); padding: 0.75rem 1.5rem; border-radius: 8px; text-decoration: none; font-size: 0.875rem; font-weight: 500; border: none; cursor: pointer; transition: opacity 0.2s; }
+    .btn-download:hover { opacity: 0.85; }
+    .btn-new { display: inline-flex; align-items: center; gap: 0.5rem; background: transparent; color: var(--muted); padding: 0.75rem 1.25rem; border-radius: 8px; font-size: 0.875rem; font-weight: 500; border: 1px solid var(--line); cursor: pointer; transition: all 0.2s; }
+    .btn-new:hover { color: var(--ink); border-color: var(--ink); }
+
+    /* TABS */
+    .tabs { display: flex; gap: 0; border-bottom: 1px solid var(--line); margin-bottom: 2rem; overflow-x: auto; }
+    .tab-btn { padding: 0.75rem 1.25rem; font-size: 0.875rem; font-weight: 500; color: var(--muted); background: none; border: none; border-bottom: 2px solid transparent; cursor: pointer; white-space: nowrap; transition: all 0.2s; }
+    .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+    .tab-btn:hover:not(.active) { color: var(--ink); }
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    /* CONTENIDO TABS */
+    .card { background: var(--white); border: 1px solid var(--line); border-radius: 14px; padding: 1.75rem; margin-bottom: 1rem; }
+    .card-label { font-size: 0.72rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); margin-bottom: 1rem; }
+    .resumen-list { list-style: none; }
+    .resumen-list li { padding: 0.6rem 0; border-bottom: 1px solid var(--line); font-size: 0.925rem; line-height: 1.6; display: flex; gap: 0.75rem; }
+    .resumen-list li:last-child { border-bottom: none; }
+    .resumen-list li::before { content: '→'; color: var(--accent); flex-shrink: 0; font-weight: 600; }
+    .compromiso-item { display: flex; gap: 0.75rem; padding: 0.6rem 0; border-bottom: 1px solid var(--line); font-size: 0.925rem; line-height: 1.6; }
+    .compromiso-item:last-child { border-bottom: none; }
+    .check-box { width: 18px; height: 18px; border: 2px solid var(--line); border-radius: 4px; flex-shrink: 0; margin-top: 2px; }
+    .acta-text { font-size: 0.9rem; line-height: 1.9; white-space: pre-wrap; color: var(--ink); font-family: 'Inter', sans-serif; }
+    .transcripcion-text { font-size: 0.875rem; line-height: 1.85; color: var(--muted); max-height: 500px; overflow-y: auto; padding-right: 0.5rem; }
+    .transcripcion-text::-webkit-scrollbar { width: 4px; }
+    .transcripcion-text::-webkit-scrollbar-thumb { background: var(--line); border-radius: 2px; }
+
+    /* FEATURES */
+    .features { max-width: 900px; margin: 0 auto; padding: 0 2rem 6rem; display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.25rem; }
+    .feature-card { background: var(--white); border: 1px solid var(--line); border-radius: 14px; padding: 1.5rem; }
+    .feature-icon { font-size: 1.5rem; margin-bottom: 0.75rem; }
+    .feature-card h3 { font-size: 0.9rem; font-weight: 600; margin-bottom: 0.4rem; }
+    .feature-card p { font-size: 0.82rem; color: var(--muted); line-height: 1.65; }
+
+    /* FOOTER */
+    footer { border-top: 1px solid var(--line); padding: 1.5rem 2.5rem; text-align: center; }
+    footer p { font-size: 0.8rem; color: var(--muted); }
+    footer a { color: var(--accent); text-decoration: none; }
+
+    @media (max-width: 700px) {
+      .features { grid-template-columns: 1fr; }
+      nav { padding: 1rem 1.25rem; }
+      .hero { padding: 3rem 1.25rem 2rem; }
+      .upload-section, .results-section, .features { padding-left: 1.25rem; padding-right: 1.25rem; }
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <a href="https://oljara.com" class="logo">oljar<span>a</span>voz</a>
+  <span class="nav-tag">Gratis · IA local</span>
+</nav>
+
+<div class="hero" id="hero-section">
+  <span class="hero-tag">Herramienta gratuita</span>
+  <h1>Tu reunión,<br /><em>convertida en acta</em><br />en minutos.</h1>
+  <p>Sube el audio y la IA transcribe, resume, extrae compromisos y genera el acta lista para firmar. Sin costo, sin nube, sin límites.</p>
+</div>
+
+<div class="upload-section" id="upload-section">
+  <div class="drop-zone" id="drop-zone">
+    <svg class="drop-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="22"/>
+    </svg>
+    <div class="drop-title">Arrastra tu audio aquí</div>
+    <div class="drop-sub">o <strong id="browse-link">selecciona un archivo</strong></div>
+    <div class="drop-formats">MP3 · WAV · M4A · OGG · FLAC · MP4 · hasta 200 MB</div>
+    <input type="file" id="file-input" accept=".mp3,.wav,.m4a,.ogg,.flac,.mp4,.webm,.opus" />
+  </div>
+
+  <div class="progress-box" id="progress-box">
+    <div class="progress-header">
+      <div class="spinner"></div>
+      <span class="progress-step" id="progress-step">Procesando...</span>
+    </div>
+    <div class="progress-bar-wrap">
+      <div class="progress-bar" id="progress-bar"></div>
+    </div>
+    <div class="progress-pct" id="progress-pct">0%</div>
+  </div>
+
+  <div class="error-box" id="error-box"></div>
+</div>
+
+<div class="results-section" id="results-section">
+  <div class="results-header">
+    <div>
+      <div class="results-title">Resultados</div>
+      <div class="results-meta" id="results-meta"></div>
+    </div>
+    <div style="display:flex;gap:0.75rem;flex-wrap:wrap;">
+      <button class="btn-new" id="btn-new">← Nuevo audio</button>
+      <button class="btn-download" id="btn-download">⬇ Descargar PDF</button>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="resumen">Resumen</button>
+    <button class="tab-btn" data-tab="compromisos">Compromisos</button>
+    <button class="tab-btn" data-tab="acta">Acta</button>
+    <button class="tab-btn" data-tab="transcripcion">Transcripción</button>
+  </div>
+
+  <div class="tab-panel active" id="tab-resumen">
+    <div class="card">
+      <div class="card-label">Puntos clave</div>
+      <ul class="resumen-list" id="resumen-list"></ul>
+    </div>
+  </div>
+
+  <div class="tab-panel" id="tab-compromisos">
+    <div class="card">
+      <div class="card-label">Tareas y compromisos identificados</div>
+      <div id="compromisos-list"></div>
+    </div>
+  </div>
+
+  <div class="tab-panel" id="tab-acta">
+    <div class="card">
+      <div class="card-label">Acta formal</div>
+      <div class="acta-text" id="acta-text"></div>
+    </div>
+  </div>
+
+  <div class="tab-panel" id="tab-transcripcion">
+    <div class="card">
+      <div class="card-label">Transcripción completa</div>
+      <div class="transcripcion-text" id="transcripcion-text"></div>
+    </div>
+  </div>
+</div>
+
+<div class="features" id="features-section">
+  <div class="feature-card">
+    <div class="feature-icon">🎙️</div>
+    <h3>Transcripción precisa</h3>
+    <p>Whisper de OpenAI con modelo medium en español. Funciona con acentos colombianos, ruido de fondo y audio de baja calidad.</p>
+  </div>
+  <div class="feature-card">
+    <div class="feature-icon">🤖</div>
+    <h3>Análisis con IA local</h3>
+    <p>El audio nunca sale de tu servidor. Todo se procesa con modelos corriendo localmente — sin enviar datos a terceros.</p>
+  </div>
+  <div class="feature-card">
+    <div class="feature-icon">📄</div>
+    <h3>Acta lista para firmar</h3>
+    <p>Resumen ejecutivo, lista de compromisos y acta formal en PDF. De 2 horas de grabación a documento en minutos.</p>
+  </div>
+</div>
+
+<footer>
+  <p>OljaraVoz es una herramienta gratuita de <a href="https://oljara.com">Oljara</a> · Cartagena, Colombia</p>
+</footer>
+
+<script>
+  history.scrollRestoration = 'manual';
+  window.addEventListener('load', () => window.scrollTo(0, 0));
+
+  const dropZone   = document.getElementById('drop-zone');
+  const fileInput  = document.getElementById('file-input');
+  const browseLink = document.getElementById('browse-link');
+  const progressBox  = document.getElementById('progress-box');
+  const progressBar  = document.getElementById('progress-bar');
+  const progressStep = document.getElementById('progress-step');
+  const progressPct  = document.getElementById('progress-pct');
+  const errorBox     = document.getElementById('error-box');
+  const resultsSection = document.getElementById('results-section');
+  const featuresSection = document.getElementById('features-section');
+  const heroSection    = document.getElementById('hero-section');
+  const uploadSection  = document.getElementById('upload-section');
+
+  let currentJobId = null;
+  let pollInterval = null;
+
+  // Drag & Drop
+  browseLink.addEventListener('click', () => fileInput.click());
+  dropZone.addEventListener('click', (e) => { if (e.target !== browseLink) fileInput.click(); });
+  dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+  dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+  dropZone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    dropZone.classList.remove('drag-over');
+    const file = e.dataTransfer.files[0];
+    if (file) uploadFile(file);
+  });
+  fileInput.addEventListener('change', () => {
+    if (fileInput.files[0]) uploadFile(fileInput.files[0]);
+  });
+
+  async function uploadFile(file) {
+    showError(null);
+    setProgress(10, 'Subiendo archivo...');
+    progressBox.classList.add('visible');
+    dropZone.style.display = 'none';
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+      const res = await fetch('/upload', { method: 'POST', body: formData });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.detail || json.error || 'Error al subir');
+      currentJobId = json.job_id;
+      pollStatus();
+    } catch (err) {
+      showError(err.message);
+      resetUpload();
+    }
+  }
+
+  function pollStatus() {
+    pollInterval = setInterval(async () => {
+      try {
+        const res  = await fetch(`/status/${currentJobId}`);
+        const json = await res.json();
+        setProgress(json.progress, json.step);
+
+        if (json.status === 'done') {
+          clearInterval(pollInterval);
+          await loadResults();
+        } else if (json.status === 'error') {
+          clearInterval(pollInterval);
+          showError(json.error || 'Error durante el procesamiento.');
+          resetUpload();
+        }
+      } catch {
+        clearInterval(pollInterval);
+        showError('No se pudo conectar con el servidor.');
+        resetUpload();
+      }
+    }, 1500);
+  }
+
+  async function loadResults() {
+    const res  = await fetch(`/result/${currentJobId}`);
+    const data = await res.json();
+
+    // Resumen
+    const resumenList = document.getElementById('resumen-list');
+    resumenList.innerHTML = '';
+    (data.resumen || []).forEach(p => {
+      const li = document.createElement('li');
+      li.textContent = p;
+      resumenList.appendChild(li);
+    });
+
+    // Compromisos
+    const compromisosList = document.getElementById('compromisos-list');
+    compromisosList.innerHTML = '';
+    const compromisos = data.compromisos || [];
+    if (compromisos.length === 0) {
+      compromisosList.innerHTML = '<p style="color:var(--muted);font-size:0.875rem;">No se identificaron compromisos explícitos.</p>';
+    } else {
+      compromisos.forEach(c => {
+        const div = document.createElement('div');
+        div.className = 'compromiso-item';
+        div.innerHTML = `<div class="check-box"></div><span>${c}</span>`;
+        compromisosList.appendChild(div);
+      });
+    }
+
+    // Acta
+    document.getElementById('acta-text').textContent = data.acta || '';
+
+    // Transcripción
+    document.getElementById('transcripcion-text').textContent = data.transcripcion || '';
+
+    // Meta
+    document.getElementById('results-meta').textContent =
+      `${(data.transcripcion || '').split(' ').length} palabras transcritas`;
+
+    // Mostrar resultados
+    progressBox.classList.remove('visible');
+    heroSection.style.display = 'none';
+    featuresSection.style.display = 'none';
+    resultsSection.classList.add('visible');
+    window.scrollTo(0, 0);
+  }
+
+  function setProgress(pct, step) {
+    progressBar.style.width = `${pct}%`;
+    progressPct.textContent = `${pct}%`;
+    progressStep.textContent = step || 'Procesando...';
+  }
+
+  function showError(msg) {
+    if (msg) {
+      errorBox.textContent = msg;
+      errorBox.classList.add('visible');
+    } else {
+      errorBox.classList.remove('visible');
+    }
+  }
+
+  function resetUpload() {
+    progressBox.classList.remove('visible');
+    dropZone.style.display = '';
+    fileInput.value = '';
+    currentJobId = null;
+  }
+
+  // Tabs
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+    });
+  });
+
+  // Descargar PDF
+  document.getElementById('btn-download').addEventListener('click', () => {
+    if (currentJobId) window.open(`/download/${currentJobId}`, '_blank');
+  });
+
+  // Nuevo audio
+  document.getElementById('btn-new').addEventListener('click', () => {
+    resultsSection.classList.remove('visible');
+    heroSection.style.display = '';
+    featuresSection.style.display = '';
+    resetUpload();
+    showError(null);
+    currentJobId = null;
+    window.scrollTo(0, 0);
+  });
+</script>
+</body>
+</html>
