@@ -75,7 +75,7 @@ ALLOWED_EXT = {".mp3", ".wav", ".ogg", ".m4a", ".mp4", ".webm", ".flac", ".opus"
 
 @app.post("/upload")
 @limiter.limit("10/minute")
-async def upload(request, background_tasks: BackgroundTasks, file: UploadFile = File(...)):
+async def upload(request: Request, background_tasks: BackgroundTasks, file: UploadFile = File(...)):
     # Validar extensión
     ext = Path(file.filename).suffix.lower()
     if ext not in ALLOWED_EXT:
