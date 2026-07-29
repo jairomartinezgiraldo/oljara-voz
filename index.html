@@ -3,8 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>OljaraVoz — Transcriptor de Reuniones con IA</title>
+  <title>OljaraVoz — Transcripción de Reuniones con IA</title>
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%231A56DB'/%3E%3Ctext x='16' y='24' text-anchor='middle' font-family='Georgia%2C serif' font-size='18' font-weight='bold' fill='white'%3EOV%3C/text%3E%3C/svg%3E" />
+  <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet" />
   <style>
@@ -117,13 +118,13 @@
 
 <nav>
   <a href="https://oljara.com" class="logo">oljar<span>a</span>voz</a>
-  <span class="nav-tag">Gratis · IA local</span>
+  <span class="nav-tag">IA local · Privado</span>
 </nav>
 
 <div class="hero" id="hero-section">
-  <span class="hero-tag">Herramienta gratuita</span>
+  <span class="hero-tag">De Oljara</span>
   <h1>Tu reunión,<br /><em>convertida en acta</em><br />en minutos.</h1>
-  <p>Sube el audio y la IA transcribe, resume, extrae compromisos y genera el acta lista para firmar. Sin costo, sin nube, sin límites.</p>
+  <p>Sube el audio y la IA transcribe, resume, extrae compromisos y genera el acta lista para firmar. Sin nube, sin límites.</p>
 </div>
 
 <div class="upload-section" id="upload-section">
@@ -135,6 +136,7 @@
     <div class="drop-sub">o <strong id="browse-link">selecciona un archivo</strong></div>
     <div class="drop-formats">MP3 · WAV · M4A · OGG · FLAC · MP4 · hasta 200 MB</div>
     <input type="file" id="file-input" accept=".mp3,.wav,.m4a,.ogg,.flac,.mp4,.webm,.opus" />
+    <div class="cf-turnstile" data-sitekey="0x4AAAAAAD-lL6rzVK_9eojF" data-theme="light" style="margin-top:1.25rem;display:flex;justify-content:center;"></div>
   </div>
 
   <div class="progress-box" id="progress-box">
@@ -218,7 +220,7 @@
 </div>
 
 <footer>
-  <p>OljaraVoz es una herramienta gratuita de <a href="https://oljara.com">Oljara</a> · Cartagena, Colombia</p>
+  <p>OljaraVoz · una herramienta de <a href="https://oljara.com">Oljara</a> · Cartagena, Colombia</p>
 </footer>
 
 <script>
@@ -264,6 +266,8 @@
 
     const formData = new FormData();
     formData.append('file', file);
+    const tsToken = document.querySelector('[name="cf-turnstile-response"]');
+    if (tsToken) formData.append('cf-turnstile-response', tsToken.value);
 
     try {
       const res = await fetch('/upload', { method: 'POST', body: formData });
