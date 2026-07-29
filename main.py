@@ -176,7 +176,7 @@ Transcripción:
 Responde SOLO el JSON, sin texto adicional."""
 
     try:
-        async with httpx.AsyncClient(timeout=120) as client:
+        async with httpx.AsyncClient(timeout=180) as client:
             resp = await client.post(
                 f"{OLLAMA_URL}/api/generate",
                 json={"model": OLLAMA_MODEL, "prompt": prompt, "stream": False},
@@ -187,11 +187,17 @@ Responde SOLO el JSON, sin texto adicional."""
             start = raw.find("{")
             end = raw.rfind("}") + 1
             if start >= 0 and end > start:
-                return json.loads(raw[start:end])
+                data = json.loads(raw[start:end])
+                if isinstance(data, dict):
+                    return data
+            # Ollama respondió pero sin JSON válido — usar transcripción como fallback
+            return {
+                "resumen": ["El modelo respondió pero no en formato esperado. Transcripción disponible abajo."],
+                "compromisos": [],
+                "acta": f"TRANSCRIPCIÓN:\n\n{transcripcion}",
+            }
     except Exception as e:
         raise RuntimeError(f"Ollama ({OLLAMA_URL}): {e}")
-
-    # Fallback si Ollama falla — el error ya fue lanzado arriba, no llega aquí
 
 def generar_pdf(job_id: str, filename: str, transcripcion: str, analisis: dict) -> Path:
     output = RESULTS_DIR / f"{job_id}.pdf"
