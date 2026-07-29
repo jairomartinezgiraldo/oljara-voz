@@ -179,7 +179,7 @@ Responde SOLO el JSON, sin texto adicional."""
         async with httpx.AsyncClient(timeout=180) as client:
             resp = await client.post(
                 f"{OLLAMA_URL}/api/generate",
-                json={"model": OLLAMA_MODEL, "prompt": prompt, "stream": False},
+                json={"model": OLLAMA_MODEL, "prompt": prompt, "stream": False, "format": "json"},
             )
             resp.raise_for_status()
             raw = resp.json().get("response", "")
@@ -190,9 +190,9 @@ Responde SOLO el JSON, sin texto adicional."""
                 data = json.loads(raw[start:end])
                 if isinstance(data, dict):
                     return data
-            # Ollama respondió pero sin JSON válido — usar transcripción como fallback
+            # Ollama respondió pero sin JSON válido
             return {
-                "resumen": ["El modelo respondió pero no en formato esperado. Transcripción disponible abajo."],
+                "resumen": [f"RAW OLLAMA: {raw[:500]}"],
                 "compromisos": [],
                 "acta": f"TRANSCRIPCIÓN:\n\n{transcripcion}",
             }
