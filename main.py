@@ -149,7 +149,15 @@ def _update_job(job_id, **kwargs):
 
 def transcribe(audio_path: Path) -> str:
     model = get_whisper()
-    segments, _ = model.transcribe(str(audio_path), language="es", beam_size=5)
+    segments, _ = model.transcribe(
+        str(audio_path),
+        language="es",
+        beam_size=1,           # más rápido, calidad similar para español
+        vad_filter=True,       # salta silencios automáticamente
+        vad_parameters=dict(min_silence_duration_ms=500),
+        condition_on_previous_text=False,  # evita repeticiones, más rápido
+        temperature=0,         # determinístico, sin retries
+    )
     return " ".join(seg.text.strip() for seg in segments)
 
 async def analizar_con_ollama(transcripcion: str) -> dict:
@@ -181,14 +189,9 @@ Responde SOLO el JSON, sin texto adicional."""
             if start >= 0 and end > start:
                 return json.loads(raw[start:end])
     except Exception as e:
-        pass
+        raise RuntimeError(f"Ollama ({OLLAMA_URL}): {e}")
 
-    # Fallback si Ollama falla
-    return {
-        "resumen": ["No se pudo conectar con el modelo de IA. Revisa que Ollama esté corriendo."],
-        "compromisos": [],
-        "acta": f"TRANSCRIPCIÓN COMPLETA:\n\n{transcripcion}",
-    }
+    # Fallback si Ollama falla — el error ya fue lanzado arriba, no llega aquí
 
 def generar_pdf(job_id: str, filename: str, transcripcion: str, analisis: dict) -> Path:
     output = RESULTS_DIR / f"{job_id}.pdf"
@@ -264,6 +267,38 @@ def generar_pdf(job_id: str, filename: str, transcripcion: str, analisis: dict) 
 
     doc.build(story)
     return output
+
+# ── Diagnóstico ───────────────────────────────────────────────────────────────
+@app.get("/health/ollama")
+async def health_ollama():
+    try:
+        async with httpx.AsyncClient(timeout=10) as client:
+            # 1. Verifica que Ollama responda
+            tags = await client.get(f"{OLLAMA_URL}/api/tags")
+            models = [m["name"] for m in tags.json().get("models", [])]
+
+            # 2. Prueba rápida de generación
+            resp = await client.post(
+                f"{OLLAMA_URL}/api/generate",
+                json={"model": OLLAMA_MODEL, "prompt": "Di solo: OK", "stream": False},
+            )
+            resp.raise_for_status()
+            reply = resp.json().get("response", "")
+
+            return JSONResponse({
+                "ok": True,
+                "ollama_url": OLLAMA_URL,
+                "model": OLLAMA_MODEL,
+                "models_available": models,
+                "test_reply": reply.strip(),
+            })
+    except Exception as e:
+        return JSONResponse(status_code=503, content={
+            "ok": False,
+            "ollama_url": OLLAMA_URL,
+            "model": OLLAMA_MODEL,
+            "error": str(e),
+        })
 
 # ── Estado y descarga ──────────────────────────────────────────────────────────
 @app.get("/status/{job_id}")
