@@ -11,9 +11,9 @@
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
-      --bg: #ffffff;
+      --bg: #F5F2EC;
       --fg: #0D0D0D;
-      --muted: rgba(13,13,13,.4);
+      --muted: rgba(13,13,13,.58);
       --line: rgba(13,13,13,.07);
       --error: #cc3333;
       --glass: rgba(255,255,255,.72);
@@ -55,7 +55,7 @@
       display: flex; justify-content: space-between; align-items: center;
       padding: 1rem 2rem;
       border-bottom: 1px solid var(--line);
-      background: rgba(255,255,255,.85);
+      background: rgba(245,242,236,.92);
       backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
       position: sticky; top: 0; z-index: 100;
     }
@@ -70,7 +70,7 @@
     .nav-tag {
       font-family: 'JetBrains Mono', monospace;
       font-size: 0.68rem; letter-spacing: .12em; text-transform: uppercase;
-      color: rgba(13,13,13,.28);
+      color: rgba(13,13,13,.48);
     }
 
     /* CONTENEDOR BASE */
@@ -81,7 +81,7 @@
     .hero-kicker {
       font-family: 'JetBrains Mono', monospace;
       font-size: 0.7rem; letter-spacing: .15em; text-transform: uppercase;
-      color: rgba(13,13,13,.28); margin-bottom: 1.25rem; display: block;
+      color: rgba(13,13,13,.48); margin-bottom: 1.25rem; display: block;
     }
     .hero h1 {
       font-size: clamp(2rem, 5vw, 3.2rem); font-weight: 900;
@@ -115,7 +115,7 @@
     .drop-formats {
       margin-top: 0.75rem;
       font-family: 'JetBrains Mono', monospace;
-      font-size: 0.68rem; color: rgba(13,13,13,.22); letter-spacing: .05em;
+      font-size: 0.68rem; color: rgba(13,13,13,.42); letter-spacing: .05em;
     }
     #file-input { display: none; }
 
@@ -195,7 +195,7 @@
     .card-label {
       font-family: 'JetBrains Mono', monospace;
       font-size: 0.68rem; letter-spacing: .12em; text-transform: uppercase;
-      color: rgba(13,13,13,.28); margin-bottom: 1rem;
+      color: rgba(13,13,13,.48); margin-bottom: 1rem;
     }
     .resumen-list { list-style: none; }
     .resumen-list li {
@@ -230,7 +230,7 @@
 
     /* FOOTER */
     footer { border-top: 1px solid var(--line); padding: 1.5rem 2.5rem; text-align: center; position: relative; z-index: 1; }
-    footer p { font-family: 'JetBrains Mono', monospace; font-size: 0.72rem; color: rgba(13,13,13,.25); }
+    footer p { font-family: 'JetBrains Mono', monospace; font-size: 0.72rem; color: rgba(13,13,13,.45); }
     footer a { color: rgba(13,13,13,.4); text-decoration: none; }
 
     @media (max-width: 700px) {
