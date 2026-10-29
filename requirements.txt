@@ -1,7 +1,10 @@
-fastapi
-uvicorn[standard]
-python-multipart
-slowapi
-faster-whisper
-httpx
-reportlab
+# Versiones fijadas al conjunto vigente el 2026-08-07, fecha del ultimo build
+# que funciono. Sin pineo, una reconstruccion trae dependencias nuevas y la
+# aplicacion deja de arrancar (FastAPI 0.141.1 -> 0.162.0 rompio Form(alias=...)).
+fastapi==0.141.1
+uvicorn[standard]==0.52.1
+python-multipart==0.0.32
+slowapi==0.1.10
+faster-whisper==1.2.1
+httpx==0.28.1
+reportlab==5.0.0
